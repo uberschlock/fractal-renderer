@@ -1,329 +1,1669 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="dark">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>CYBERDECK // PROGRAM DIRECTORY</title>
-  
-  <!-- Retro Cyberpunk Fonts from Google Fonts -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>CyberSuite WebGL High-Res Fractal Renderer</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        cyber: {
+                            bg: '#03060d',
+                            panel: 'rgba(10, 16, 31, 0.78)',
+                            border: 'rgba(255, 255, 255, 0.12)',
+                            cyan: '#06b6d4',
+                            pink: '#ec4899',
+                            purple: '#a855f7',
+                            amber: '#f59e0b',
+                            emerald: '#10b981',
+                            blue: '#3b82f6'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace']
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:ital,wght@0,400;0,500;0,700;1,400&display=swap" rel="stylesheet">
+    
+    <style>
+        body {
+            background-color: #020408;
+            color: #f1f5f9;
+            font-family: 'Inter', sans-serif;
+            overflow: hidden;
+            user-select: none;
+            -webkit-user-select: none;
+        }
 
-  <style>
-    :root {
-      --bg-dark: #0a0017;
-      --card-bg: rgba(20, 5, 38, 0.85);
-      --neon-cyan: #00f3ff;
-      --neon-pink: #ff007f;
-      --neon-purple: #b026ff;
-      --neon-yellow: #ffe600;
-      --text-main: #e2f1ff;
-      --text-muted: #8e9bb0;
-      --grid-line: rgba(255, 0, 127, 0.15);
-    }
+        .glass-panel {
+            background: rgba(8, 14, 28, 0.78);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            box-shadow: 0 16px 40px 0 rgba(0, 0, 0, 0.6);
+        }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+        .glass-card {
+            background: rgba(16, 24, 44, 0.65);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
 
-    body {
-      font-family: 'Share Tech Mono', monospace;
-      background-color: var(--bg-dark);
-      /* 80s Cyber Neon Grid Pattern */
-      background-image: 
-        linear-gradient(var(--grid-line) 1px, transparent 1px),
-        linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
-      background-size: 30px 30px;
-      color: var(--text-main);
-      padding: 3rem 1.5rem;
-      max-width: 1200px;
-      margin: 0 auto;
-      min-height: 100vh;
-      position: relative;
-      overflow-x: hidden;
-    }
+        /* Custom Scrollbars */
+        ::-webkit-scrollbar {
+            width: 5px;
+            height: 5px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(4, 7, 15, 0.5);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(6, 182, 212, 0.6);
+        }
 
-    /* CRT Scanline Overlay Effect */
-    body::before {
-      content: " ";
-      display: block;
-      position: fixed;
-      top: 0; left: 0; bottom: 0; right: 0;
-      background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.35) 50%), 
-                  linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
-      z-index: 999;
-      background-size: 100% 3px, 6px 100%;
-      pointer-events: none;
-    }
+        .glow-cyan { text-shadow: 0 0 12px rgba(6, 182, 212, 0.75); }
+        .glow-pink { text-shadow: 0 0 12px rgba(236, 72, 153, 0.75); }
 
-    header {
-      margin-bottom: 3.5rem;
-      text-align: center;
-      position: relative;
-    }
+        input[type=range] {
+            accent-color: #06b6d4;
+        }
 
-    /* Synthwave Glowing Title */
-    header h1 {
-      font-family: 'Orbitron', sans-serif;
-      font-size: clamp(2rem, 5vw, 3.5rem);
-      font-weight: 900;
-      text-transform: uppercase;
-      letter-spacing: 4px;
-      color: #fff;
-      text-shadow: 
-        0 0 5px #fff,
-        0 0 10px #fff,
-        0 0 20px var(--neon-pink),
-        0 0 40px var(--neon-pink),
-        0 0 80px var(--neon-pink);
-      margin-bottom: 0.75rem;
-    }
+        #main-canvas {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            display: block;
+            touch-action: none;
+        }
 
-    header p {
-      color: var(--neon-cyan);
-      font-size: 1.1rem;
-      letter-spacing: 2px;
-      text-transform: uppercase;
-      text-shadow: 0 0 8px var(--neon-cyan);
-    }
+        .panel-transition {
+            transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.35s ease;
+        }
 
-    #repo-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-      gap: 2rem;
-    }
+        .badge-pulse {
+            animation: pulse-glow 2s infinite ease-in-out;
+        }
 
-    /* Cyber Card Container */
-    .card {
-      background: var(--card-bg);
-      border: 1px solid var(--neon-pink);
-      border-radius: 4px;
-      padding: 1.5rem;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      box-shadow: 0 0 15px rgba(255, 0, 127, 0.2), inset 0 0 15px rgba(255, 0, 127, 0.1);
-      backdrop-filter: blur(5px);
-      transition: all 0.3s ease;
-      position: relative;
-      clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 0 100%);
-    }
-
-    .card:hover {
-      transform: translateY(-5px);
-      border-color: var(--neon-cyan);
-      box-shadow: 0 0 25px rgba(0, 243, 255, 0.5), inset 0 0 20px rgba(0, 243, 255, 0.2);
-    }
-
-    .card-header {
-      margin-bottom: 0.75rem;
-    }
-
-    .card-title {
-      font-family: 'Orbitron', sans-serif;
-      font-size: 1.25rem;
-      letter-spacing: 1px;
-      text-transform: uppercase;
-    }
-
-    /* Main Title Link points directly to Live Demo */
-    .card-title a {
-      color: #fff;
-      text-decoration: none;
-      transition: color 0.2s;
-    }
-
-    .card:hover .card-title a {
-      color: var(--neon-cyan);
-      text-shadow: 0 0 8px var(--neon-cyan);
-    }
-
-    .card-desc {
-      font-size: 0.95rem;
-      color: var(--text-muted);
-      line-height: 1.5;
-      margin-bottom: 1.5rem;
-      flex-grow: 1;
-    }
-
-    /* Prominent Retro CTA Button for Live Demo */
-    .btn-launch {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      width: 100%;
-      text-align: center;
-      background: linear-gradient(90deg, var(--neon-pink), var(--neon-purple));
-      color: #fff;
-      padding: 0.75rem 1rem;
-      font-family: 'Orbitron', sans-serif;
-      font-weight: 800;
-      font-size: 0.9rem;
-      letter-spacing: 2px;
-      text-transform: uppercase;
-      text-decoration: none;
-      margin-bottom: 1.2rem;
-      border: none;
-      clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px);
-      box-shadow: 0 0 10px rgba(255, 0, 127, 0.4);
-      transition: all 0.2s ease;
-    }
-
-    .btn-launch:hover {
-      background: linear-gradient(90deg, var(--neon-cyan), var(--neon-purple));
-      box-shadow: 0 0 20px rgba(0, 243, 255, 0.8);
-      color: #000;
-      font-weight: 900;
-    }
-
-    .btn-secondary {
-      background: #190a2e;
-      border: 1px solid var(--text-muted);
-      color: var(--text-muted);
-      box-shadow: none;
-    }
-
-    .btn-secondary:hover {
-      background: #2b124c;
-      color: #fff;
-      border-color: #fff;
-      box-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
-    }
-
-    /* Footer Meta Info & Secondary Source Link */
-    .card-footer {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-size: 0.8rem;
-      border-top: 1px dashed rgba(255, 0, 127, 0.3);
-      padding-top: 0.85rem;
-    }
-
-    .badge {
-      display: inline-block;
-      color: var(--neon-yellow);
-      background: rgba(255, 230, 0, 0.1);
-      border: 1px solid rgba(255, 230, 0, 0.3);
-      padding: 0.15rem 0.5rem;
-      font-size: 0.75rem;
-      letter-spacing: 1px;
-      text-transform: uppercase;
-    }
-
-    /* Subtle Secondary Link to GitHub Source Code */
-    .github-source-link {
-      color: var(--text-muted);
-      text-decoration: none;
-      letter-spacing: 1px;
-      text-transform: uppercase;
-      transition: color 0.2s, text-shadow 0.2s;
-    }
-
-    .github-source-link:hover {
-      color: var(--neon-cyan);
-      text-shadow: 0 0 5px var(--neon-cyan);
-    }
-
-    #loading {
-      text-align: center;
-      font-family: 'Orbitron', sans-serif;
-      font-size: 1.3rem;
-      color: var(--neon-cyan);
-      letter-spacing: 3px;
-      text-shadow: 0 0 10px var(--neon-cyan);
-      margin-top: 5rem;
-    }
-  </style>
+        @keyframes pulse-glow {
+            0%, 100% { box-shadow: 0 0 5px rgba(6, 182, 212, 0.3); }
+            50% { box-shadow: 0 0 15px rgba(6, 182, 212, 0.8); }
+        }
+    </style>
 </head>
-<body>
+<body class="relative w-screen h-screen overflow-hidden text-slate-100 antialiased">
 
-  <header>
-    <h1 id="user-title">CYBER DECK</h1>
-    <p>// SYSTEM STATUS: ONLINE // SELECT PROGRAM TO RUN</p>
-  </header>
+    <canvas id="main-canvas"></canvas>
 
-  <div id="loading">[ INITIALIZING SYSTEM DIRECTORY... ]</div>
-  <div id="repo-grid"></div>
-
-  <script>
-    // -------------------------------------------------------------
-    // REPLACE THIS WITH YOUR GITHUB USERNAME:
-    const GITHUB_USERNAME = "YOUR_GITHUB_USERNAME_HERE";
-    // -------------------------------------------------------------
-
-    document.getElementById("user-title").innerText = `${GITHUB_USERNAME}.EXE`;
-
-    async function fetchRepos() {
-      const grid = document.getElementById("repo-grid");
-      const loading = document.getElementById("loading");
-
-      try {
-        const response = await fetch(
-          `https://api.github.com/users/${GITHUB_USERNAME}/repos?per_page=100&sort=updated`
-        );
-        
-        if (!response.ok) throw new Error("ACCESS_DENIED // USER NOT FOUND");
-        
-        let repos = await response.json();
-
-        // Exclude forks and the root site repository
-        repos = repos.filter(repo => !repo.fork && repo.name !== `${GITHUB_USERNAME}.github.io`);
-
-        loading.style.display = "none";
-
-        repos.forEach(repo => {
-          const card = document.createElement("div");
-          card.className = "card";
-
-          // Determine Live Demo Link (GitHub Pages or Custom Homepage URL)
-          const liveUrl = repo.has_pages 
-            ? `https://${GITHUB_USERNAME}.github.io/${repo.name}` 
-            : repo.homepage;
-
-          const mainTargetUrl = liveUrl || repo.html_url;
-          const hasLiveDemo = Boolean(liveUrl);
-
-          card.innerHTML = `
+    <header id="top-header" class="absolute top-3 left-3 right-3 z-30 flex items-center justify-between pointer-events-none panel-transition">
+        <div class="flex items-center space-x-3 pointer-events-auto glass-panel px-4 py-2 rounded-2xl border-slate-800">
+            <div class="w-8 h-8 rounded-xl bg-gradient-to-tr from-cyan-500 via-purple-500 to-pink-500 p-[2px] flex items-center justify-center shadow-lg shadow-cyan-500/20">
+                <div class="w-full h-full bg-slate-950 rounded-[10px] flex items-center justify-center">
+                    <span class="text-cyan-400 font-bold text-sm">🌀</span>
+                </div>
+            </div>
             <div>
-              <div class="card-header">
-                <h2 class="card-title">
-                  <a href="${mainTargetUrl}" target="_blank" rel="noopener">${repo.name}</a>
-                </h2>
-              </div>
-              <p class="card-desc">${repo.description || "NO DATA DESCRIPTION AVAILABLE."}</p>
+                <h1 class="font-bold text-sm tracking-wider bg-gradient-to-r from-cyan-400 via-purple-300 to-pink-400 bg-clip-text text-transparent">
+                    CYBERFRACTAL <span class="text-[10px] px-1.5 py-0.5 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-300 ml-1 font-mono">PRO 2.0</span>
+                </h1>
+                <p class="text-[10px] text-slate-400 hidden sm:block">GPU-Accelerated High-Res Complex Explorer</p>
+            </div>
+        </div>
+
+        <!-- Resolution & Performance Status Badge -->
+        <div class="hidden md:flex items-center space-x-3 pointer-events-auto glass-panel px-3.5 py-1.5 rounded-2xl border-slate-800 text-xs font-mono">
+            <div class="flex items-center space-x-1.5">
+                <span id="resolution-status-dot" class="w-2 h-2 rounded-full bg-emerald-400 badge-pulse"></span>
+                <span class="text-slate-400">Viewport:</span>
+                <span id="badge-res-dimensions" class="text-cyan-300 font-bold">1920×1080</span>
+            </div>
+            <span class="text-slate-700">|</span>
+            <div class="flex items-center space-x-1">
+                <span class="text-slate-400">Pixels:</span>
+                <span id="badge-res-megapixels" class="text-purple-300 font-semibold">2.07 MP</span>
+            </div>
+            <span class="text-slate-700">|</span>
+            <div class="flex items-center space-x-1">
+                <span class="text-slate-400">Scale:</span>
+                <span id="badge-res-scale" class="text-amber-300 font-semibold">1.0x (100%)</span>
+            </div>
+        </div>
+
+        <!-- Quick Top Action Buttons -->
+        <div class="flex items-center space-x-2 pointer-events-auto">
+            <button onclick="openExportModal()" title="Export High-Res Snapshot (4K/8K)" class="glass-panel px-3.5 py-2 rounded-xl text-xs font-semibold text-cyan-300 hover:text-cyan-200 border-cyan-500/30 bg-cyan-500/10 hover:bg-cyan-500/20 flex items-center space-x-1.5 transition">
+                <span>📸</span>
+                <span class="hidden sm:inline">High-Res Export</span>
+            </button>
+            <button id="audio-btn" onclick="toggleAudio()" title="Toggle Web Audio Generative Soundscape" class="glass-panel px-3 py-2 rounded-xl text-xs font-medium text-slate-300 hover:text-cyan-400 border-slate-800 flex items-center space-x-1.5 transition">
+                <span id="audio-icon">🔇</span>
+                <span class="hidden sm:inline" id="audio-label">Sound</span>
+            </button>
+            <button onclick="shareLink()" title="Copy Shareable URL Hash" class="glass-panel px-3 py-2 rounded-xl text-xs font-medium text-slate-300 hover:text-cyan-400 border-slate-800 flex items-center space-x-1.5 transition">
+                <span>🔗</span>
+            </button>
+            <button onclick="toggleUIPanels()" title="Toggle UI Controls (Hotkey: H)" class="glass-panel px-3 py-2 rounded-xl text-xs font-medium text-slate-300 hover:text-cyan-400 border-slate-800 transition">
+                <span id="hide-ui-icon">👁️</span>
+            </button>
+        </div>
+    </header>
+
+    <aside id="left-panel" class="absolute top-16 bottom-4 left-3 z-30 w-84 max-w-[calc(100vw-24px)] flex flex-col space-y-3 pointer-events-auto panel-transition">
+        <div class="glass-panel rounded-2xl border-slate-800 flex-1 flex flex-col overflow-hidden">
+            <!-- Panel Header -->
+            <div class="flex items-center justify-between border-b border-slate-800 p-3 bg-slate-950/50">
+                <span class="text-xs font-bold text-slate-200 tracking-wider flex items-center space-x-1.5">
+                    <span class="text-cyan-400">⚙️</span>
+                    <span>RENDER ENGINE & CONTROLS</span>
+                </span>
+                <button onclick="resetView()" class="text-[10px] font-mono px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700">
+                    RESET [R]
+                </button>
             </div>
 
-            <div>
-              <!-- Prominent Retro Action Button -->
-              <a class="btn-launch ${hasLiveDemo ? '' : 'btn-secondary'}" 
-                 href="${mainTargetUrl}" 
-                 target="_blank" 
-                 rel="noopener">
-                 ▶ ${hasLiveDemo ? 'EXECUTE PROGRAM' : 'VIEW MATRIX'}
-              </a>
-
-              <div class="card-footer">
-                <span>${repo.language ? `<span class="badge">[ ${repo.language} ]</span>` : ""}</span>
+            <!-- Scrollable Engine Settings -->
+            <div class="flex-1 overflow-y-auto p-3.5 space-y-4 text-xs">
                 
-                <!-- Subtle Secondary Source Code Link -->
-                <a class="github-source-link" href="${repo.html_url}" target="_blank" rel="noopener">
-                  // SOURCE
-                </a>
-              </div>
-            </div>
-          `;
+                <!-- 1. IMAGE RESOLUTION CONTROLS -->
+                <div class="glass-card p-3 rounded-xl space-y-2.5 border-cyan-500/20">
+                    <div class="flex items-center justify-between">
+                        <span class="font-semibold text-cyan-400 flex items-center space-x-1">
+                            <span>🖥️</span>
+                            <span>Resolution & Supersampling</span>
+                        </span>
+                        <span id="val-render-scale" class="font-mono text-cyan-300 font-bold">1.0x</span>
+                    </div>
 
-          grid.appendChild(card);
+                    <!-- Preset Scale Pills -->
+                    <div class="grid grid-cols-6 gap-1">
+                        <button onclick="setRenderScale(0.25)" class="scale-pill py-1 text-[10px] font-mono rounded bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700" data-scale="0.25">0.25x</button>
+                        <button onclick="setRenderScale(0.5)" class="scale-pill py-1 text-[10px] font-mono rounded bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700" data-scale="0.5">0.5x</button>
+                        <button onclick="setRenderScale(1.0)" class="scale-pill py-1 text-[10px] font-mono rounded bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 font-bold" data-scale="1.0">1.0x</button>
+                        <button onclick="setRenderScale(1.5)" class="scale-pill py-1 text-[10px] font-mono rounded bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700" data-scale="1.5">1.5x</button>
+                        <button onclick="setRenderScale(2.0)" class="scale-pill py-1 text-[10px] font-mono rounded bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700" data-scale="2.0">2.0x</button>
+                        <button onclick="setRenderScale(4.0)" class="scale-pill py-1 text-[10px] font-mono rounded bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700" data-scale="4.0">4.0x</button>
+                    </div>
+
+                    <!-- Custom Scale Slider -->
+                    <div>
+                        <div class="flex justify-between text-[11px] text-slate-400">
+                            <span>Render Pixel Ratio:</span>
+                            <span id="readout-pixel-dims" class="font-mono text-slate-300">1920 × 1080</span>
+                        </div>
+                        <input type="range" id="slider-render-scale" min="0.25" max="4.0" step="0.25" value="1.0" oninput="onRenderScaleSlider(this.value)" class="w-full accent-cyan-500">
+                    </div>
+
+                    <!-- Adaptive Dynamic Resolution Toggle -->
+                    <div class="pt-1 border-t border-slate-800 flex items-center justify-between">
+                        <div>
+                            <span class="text-slate-200 font-medium block">Adaptive Dynamic Res</span>
+                            <span class="text-[10px] text-slate-400 block">Lowers scale while dragging/zooming for 60 FPS</span>
+                        </div>
+                        <input type="checkbox" id="check-dynamic-res" checked onchange="state.dynamicRes = this.checked" class="w-4 h-4 accent-cyan-500 rounded cursor-pointer">
+                    </div>
+                </div>
+
+                <!-- 2. FRACTAL FORMULA SELECTOR -->
+                <div class="space-y-1.5">
+                    <label class="font-semibold text-slate-200 flex items-center justify-between">
+                        <span>Fractal Formula</span>
+                    </label>
+                    <select id="select-algorithm" onchange="onAlgorithmChange(this.value)" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-2 text-cyan-400 font-medium outline-none focus:border-cyan-500">
+                        <option value="0">Mandelbrot Set (z² + c)</option>
+                        <option value="1">Julia Set (z² + c_fixed)</option>
+                        <option value="2">Burning Ship (|Re| + i|Im|)² + c</option>
+                        <option value="3">Tricorn / Mandelbar (z̄² + c)</option>
+                        <option value="4">Newton's Fractal (z³ - 1 = 0)</option>
+                        <option value="5">Multi-Power Fractal (zᵈ + c)</option>
+                        <option value="6">Mandelbox / Folded Box 2D</option>
+                    </select>
+                </div>
+
+                <!-- Julia Mode Switcher -->
+                <div id="box-julia-toggle" class="glass-card p-2.5 rounded-xl space-y-1.5">
+                    <div class="flex items-center justify-between">
+                        <span class="text-slate-300 font-medium">Julia Plane Switch</span>
+                        <input type="checkbox" id="check-julia-mode" onchange="toggleJuliaMode(this.checked)" class="w-4 h-4 accent-cyan-500 rounded cursor-pointer">
+                    </div>
+                    <p class="text-[10px] text-slate-400 leading-tight">Fix parameter 'c' and iterate seed 'z₀' across complex coordinates.</p>
+                </div>
+
+                <!-- Power Exponent Slider -->
+                <div id="box-power" class="space-y-1.5 hidden">
+                    <div class="flex justify-between text-slate-300">
+                        <span>Exponent Power (d):</span>
+                        <span id="val-power" class="font-mono text-cyan-400">3.0</span>
+                    </div>
+                    <input type="range" id="slider-power" min="1.5" max="8.0" step="0.1" value="3.0" oninput="updatePower(this.value)" class="w-full accent-cyan-500">
+                </div>
+
+                <!-- 3. LIVE JULIA COMPLEX PARAMETERS -->
+                <div id="box-julia-params" class="glass-card p-3 rounded-xl space-y-2.5">
+                    <div class="flex items-center justify-between">
+                        <span class="font-semibold text-pink-400">Julia Seed Constant (c)</span>
+                        <button onclick="toggleJuliaLock()" id="btn-julia-lock" class="text-[10px] font-mono px-2 py-0.5 rounded bg-pink-500/20 text-pink-300 border border-pink-500/30">
+                            🔒 Canvas Click: ON
+                        </button>
+                    </div>
+
+                    <div class="space-y-2">
+                        <div>
+                            <div class="flex justify-between text-[11px] text-slate-400">
+                                <span>Real (Cr):</span>
+                                <span id="val-cr" class="font-mono text-slate-200">-0.7000</span>
+                            </div>
+                            <input type="range" id="slider-cr" min="-2.0" max="2.0" step="0.001" value="-0.7" oninput="updateJuliaCFromSliders()" class="w-full accent-pink-500">
+                        </div>
+                        <div>
+                            <div class="flex justify-between text-[11px] text-slate-400">
+                                <span>Imaginary (Ci):</span>
+                                <span id="val-ci" class="font-mono text-slate-200">0.2701</span>
+                            </div>
+                            <input type="range" id="slider-ci" min="-2.0" max="2.0" step="0.001" value="0.2701" oninput="updateJuliaCFromSliders()" class="w-full accent-pink-500">
+                        </div>
+                    </div>
+
+                    <!-- Animated Julia Path -->
+                    <div class="pt-2 border-t border-slate-800 space-y-2">
+                        <div class="flex items-center justify-between">
+                            <span class="text-slate-300">Morph Orbit Animation</span>
+                            <input type="checkbox" id="check-morph" onchange="toggleMorphing(this.checked)" class="w-4 h-4 accent-pink-500 rounded cursor-pointer">
+                        </div>
+                        <div class="grid grid-cols-2 gap-2">
+                            <select id="select-morph-path" onchange="state.morphPath = this.value" class="bg-slate-900 border border-slate-700 rounded-lg p-1.5 text-[11px] text-slate-200">
+                                <option value="circle">Circle Orbit</option>
+                                <option value="lissajous">Lissajous Knot</option>
+                                <option value="cardioid">Cardioid</option>
+                            </select>
+                            <div class="flex items-center space-x-1 bg-slate-900 border border-slate-700 rounded-lg px-2">
+                                <span class="text-[10px] text-slate-400">Speed:</span>
+                                <input type="range" id="slider-morph-speed" min="0.1" max="3.0" step="0.1" value="1.0" oninput="state.morphSpeed = parseFloat(this.value)" class="w-full">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 4. RENDER PRECISION & ITERATIONS -->
+                <div class="glass-card p-3 rounded-xl space-y-2.5">
+                    <span class="font-semibold text-slate-300 block">Render Precision & Depth</span>
+                    
+                    <div>
+                        <div class="flex justify-between text-slate-400">
+                            <span>Max Iterations:</span>
+                            <span id="val-iterations" class="font-mono text-cyan-400">300</span>
+                        </div>
+                        <input type="range" id="slider-iterations" min="30" max="2500" step="10" value="300" oninput="updateIterations(this.value)" class="w-full accent-cyan-500">
+                    </div>
+                </div>
+
+                <!-- 5. PALETTE & COLOR SHADER CONTROLS -->
+                <div class="glass-card p-3 rounded-xl space-y-2.5">
+                    <span class="font-semibold text-purple-400 block">Color Palettes & Shading</span>
+
+                    <div class="space-y-2">
+                        <select id="select-palette" onchange="updatePalette(this.value)" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-2 text-purple-300 font-medium outline-none">
+                            <option value="0">Electric Cyberpunk</option>
+                            <option value="1">Inferno Fire & Ice</option>
+                            <option value="2">Deep Ocean Abyssal</option>
+                            <option value="3">Neon Psychedelic</option>
+                            <option value="4">Golden Ratio Sunset</option>
+                            <option value="5">Pastel Dreams</option>
+                            <option value="6">Monochrome Matrix</option>
+                        </select>
+
+                        <div>
+                            <div class="flex justify-between text-slate-400">
+                                <span>Color Frequency:</span>
+                                <span id="val-freq" class="font-mono text-slate-200">1.0x</span>
+                            </div>
+                            <input type="range" id="slider-freq" min="0.1" max="5.0" step="0.1" value="1.0" oninput="updateFreq(this.value)" class="w-full accent-purple-500">
+                        </div>
+
+                        <div>
+                            <div class="flex justify-between text-slate-400">
+                                <span>Hue Offset:</span>
+                                <span id="val-hue" class="font-mono text-slate-200">0.0</span>
+                            </div>
+                            <input type="range" id="slider-hue" min="0.0" max="1.0" step="0.01" value="0.0" oninput="updateHue(this.value)" class="w-full accent-purple-500">
+                        </div>
+
+                        <div class="flex items-center justify-between pt-1">
+                            <span class="text-slate-300">Auto Color Cycling</span>
+                            <input type="checkbox" id="check-color-cycle" onchange="state.colorCycling = this.checked" class="w-4 h-4 accent-purple-500 rounded cursor-pointer">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 6. AUTO ZOOM & FLY-IN -->
+                <div class="glass-card p-3 rounded-xl space-y-2">
+                    <div class="flex items-center justify-between">
+                        <span class="font-semibold text-amber-400">Deep Dive Auto-Zoom</span>
+                        <input type="checkbox" id="check-autozoom" onchange="toggleAutoZoom(this.checked)" class="w-4 h-4 accent-amber-500 rounded cursor-pointer">
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <span class="text-[10px] text-slate-400">Speed:</span>
+                        <input type="range" id="slider-zoom-speed" min="1.002" max="1.03" step="0.001" value="1.008" oninput="state.zoomSpeed = parseFloat(this.value)" class="w-full accent-amber-500">
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </aside>
+
+    <aside id="right-panel" class="absolute top-16 bottom-4 right-3 z-30 w-80 max-w-[calc(100vw-24px)] flex flex-col space-y-3 pointer-events-auto panel-transition">
+        
+        <!-- Live HUD Readout -->
+        <div class="glass-panel p-3.5 rounded-2xl border-slate-800 space-y-1.5 font-mono text-[11px]">
+            <div class="flex justify-between items-center text-slate-400 pb-1 border-b border-slate-800">
+                <span class="font-bold text-cyan-400 font-sans text-xs">COORDINATES & METRICS</span>
+                <span id="fps-counter" class="text-emerald-400 font-bold">60 FPS</span>
+            </div>
+            <div class="flex justify-between">
+                <span class="text-slate-500">Real (X):</span>
+                <span id="hud-real" class="text-slate-200 font-medium">-0.750000000</span>
+            </div>
+            <div class="flex justify-between">
+                <span class="text-slate-500">Imag (Y):</span>
+                <span id="hud-imag" class="text-slate-200 font-medium">0.000000000</span>
+            </div>
+            <div class="flex justify-between">
+                <span class="text-slate-500">Zoom Depth:</span>
+                <span id="hud-zoom" class="text-amber-400 font-bold">1.00e+0</span>
+            </div>
+            <div class="flex justify-between">
+                <span class="text-slate-500">Active Buffer:</span>
+                <span id="hud-buffer-size" class="text-purple-300 font-semibold">1920 × 1080</span>
+            </div>
+        </div>
+
+        <!-- Mini-Map Navigator & PiP Dual View -->
+        <div class="glass-panel p-3 rounded-2xl border-slate-800 space-y-2 flex-1 flex flex-col">
+            <div class="grid grid-cols-2 gap-2">
+                <!-- Mini-Map Canvas -->
+                <div class="space-y-1">
+                    <span class="text-[10px] font-bold text-slate-400 block uppercase tracking-wider">Mini-Map</span>
+                    <div class="relative w-full aspect-square rounded-xl overflow-hidden border border-slate-700/80 bg-slate-950">
+                        <canvas id="minimap-canvas" class="w-full h-full block"></canvas>
+                    </div>
+                </div>
+
+                <!-- Dual View PiP Canvas -->
+                <div class="space-y-1">
+                    <span id="pip-title" class="text-[10px] font-bold text-pink-400 block uppercase tracking-wider">Julia Preview</span>
+                    <div class="relative w-full aspect-square rounded-xl overflow-hidden border border-pink-500/30 bg-slate-950 shadow-lg">
+                        <canvas id="pip-canvas" class="w-full h-full block"></canvas>
+                        <div class="absolute bottom-1 right-1 text-[8px] font-mono bg-slate-950/80 px-1 rounded text-pink-300">Live Preview</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bookmarks & Presets Gallery -->
+            <div class="flex-1 flex flex-col pt-2 border-t border-slate-800 overflow-hidden space-y-2">
+                <div class="flex items-center justify-between">
+                    <span class="text-xs font-bold text-slate-200 tracking-wider">⭐ PRESETS & BOOKMARKS</span>
+                    <button onclick="saveCustomBookmark()" class="text-[10px] bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 px-2 py-0.5 rounded hover:bg-cyan-500/40">
+                        + Save View
+                    </button>
+                </div>
+
+                <div id="bookmarks-list" class="flex-1 overflow-y-auto space-y-1.5 pr-1 text-xs">
+                    <!-- Dynamic Presets HTML -->
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <div id="export-modal" class="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-4 hidden">
+        <div class="glass-panel p-6 rounded-3xl border border-cyan-500/30 max-w-lg w-full space-y-5 shadow-2xl">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <div class="flex items-center space-x-2">
+                    <span class="text-xl">📸</span>
+                    <h3 class="text-base font-bold text-white tracking-wide">HIGH-RES IMAGE EXPORT MANAGER</h3>
+                </div>
+                <button onclick="closeExportModal()" class="text-slate-400 hover:text-white text-lg">✕</button>
+            </div>
+
+            <!-- Resolution Settings Form -->
+            <div class="space-y-4 text-xs">
+                <div>
+                    <label class="block font-semibold text-slate-300 mb-1">Target Export Resolution Preset</label>
+                    <select id="export-res-preset" onchange="onExportPresetChange(this.value)" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-2 text-cyan-300 font-medium outline-none">
+                        <option value="native">Native Viewport Resolution</option>
+                        <option value="720p">HD Standard (1280 × 720 | 0.92 MP)</option>
+                        <option value="1080p" selected>Full HD (1920 × 1080 | 2.07 MP)</option>
+                        <option value="1440p">QHD 2K (2560 × 1440 | 3.68 MP)</option>
+                        <option value="4k">4K Ultra HD (3840 × 2160 | 8.29 MP)</option>
+                        <option value="8k">8K Extreme HD (7680 × 4320 | 33.18 MP)</option>
+                        <option value="custom">Custom Dimensions (Width × Height)</option>
+                    </select>
+                </div>
+
+                <!-- Custom Dimensions Grid -->
+                <div id="export-custom-dims" class="grid grid-cols-2 gap-3 hidden">
+                    <div>
+                        <label class="block text-slate-400 mb-1">Width (px)</label>
+                        <input type="number" id="export-width" value="1920" min="200" max="16384" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-2 text-slate-100 font-mono">
+                    </div>
+                    <div>
+                        <label class="block text-slate-400 mb-1">Height (px)</label>
+                        <input type="number" id="export-height" value="1080" min="200" max="16384" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-2 text-slate-100 font-mono">
+                    </div>
+                </div>
+
+                <!-- Supersampling & Quality Settings -->
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block font-semibold text-slate-300 mb-1">Anti-Aliasing (SSAA)</label>
+                        <select id="export-ssaa" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-2 text-purple-300 font-medium">
+                            <option value="1">1x Standard Sampling</option>
+                            <option value="2" selected>2x Supersampling (Crisp)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-slate-300 mb-1">File Format</label>
+                        <select id="export-format" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-2 text-pink-300 font-medium">
+                            <option value="image/png">PNG (Lossless Image)</option>
+                            <option value="image/jpeg">JPEG (High Quality 0.95)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Custom Watermark Metadata -->
+                <div class="flex items-center justify-between p-2.5 glass-card rounded-xl">
+                    <div>
+                        <span class="font-semibold text-slate-200 block">Include Metadata Watermark</span>
+                        <span class="text-[10px] text-slate-400">Embeds coordinates, fractal type, and zoom depth badge</span>
+                    </div>
+                    <input type="checkbox" id="export-watermark" checked class="w-4 h-4 accent-cyan-500 rounded cursor-pointer">
+                </div>
+
+                <!-- Custom Filename -->
+                <div>
+                    <label class="block text-slate-400 mb-1">Filename Template</label>
+                    <input type="text" id="export-filename" value="cyberfractal-render" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-2 text-slate-200 font-mono text-xs">
+                </div>
+
+                <!-- Rendering Progress Bar -->
+                <div id="export-progress-box" class="space-y-1.5 hidden">
+                    <div class="flex justify-between text-xs font-mono">
+                        <span id="export-status-text" class="text-cyan-400">Rendering Off-screen Tiles...</span>
+                        <span id="export-progress-percent" class="text-white font-bold">0%</span>
+                    </div>
+                    <div class="w-full h-2 bg-slate-900 rounded-full overflow-hidden border border-slate-800">
+                        <div id="export-progress-bar" class="h-full bg-gradient-to-r from-cyan-500 via-purple-500 to-pink-500 w-0 transition-all duration-150"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex items-center space-x-3 pt-2">
+                <button onclick="closeExportModal()" class="w-1/3 py-2.5 bg-slate-800 hover:bg-slate-700 text-xs text-slate-300 font-semibold rounded-xl border border-slate-700 transition">
+                    Cancel
+                </button>
+                <button id="btn-start-export" onclick="startHighResExport()" class="w-2/3 py-2.5 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-xs text-white font-bold rounded-xl shadow-lg shadow-cyan-500/25 transition">
+                    🚀 Render & Save High-Res
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification Toast Banner -->
+    <div id="toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 glass-panel px-5 py-2.5 rounded-full border border-cyan-500/40 text-xs font-medium text-cyan-300 shadow-2xl transition-all duration-300 opacity-0 pointer-events-none transform translate-y-4 flex items-center space-x-2">
+        <span id="toast-icon">✨</span>
+        <span id="toast-msg">Notification Message</span>
+    </div>
+
+    <script>
+        /* ===================================================================
+           1. APPLICATION STATE MANAGEMENT
+           =================================================================== */
+        const state = {
+            center: { x: -0.75, y: 0.0 },
+            targetCenter: { x: -0.75, y: 0.0 },
+            zoom: 1.0,
+            targetZoom: 1.0,
+            maxIterations: 300,
+            fractalType: 0, // 0: Mandelbrot, 1: Julia, 2: Burning Ship, 3: Tricorn, 4: Newton, 5: Multi-Power, 6: Mandelbox
+            isJuliaMode: false,
+            power: 3.0,
+            juliaC: { x: -0.7, y: 0.2701 },
+            juliaLock: true,
+            palette: 0,
+            colorFreq: 1.0,
+            hueOffset: 0.0,
+            colorCycle: 0.0,
+            colorCycling: false,
+            morphing: false,
+            morphSpeed: 1.0,
+            morphPath: 'circle',
+            morphAngle: 0.0,
+            autoZoom: false,
+            zoomSpeed: 1.008,
+            renderScale: 1.0,
+            dynamicRes: true,
+            isInteracting: false,
+            uiVisible: true,
+            audioEnabled: false,
+            hoverCoord: { x: 0, y: 0 }
+        };
+
+        const presets = [
+            { name: "Mandelbrot Main", type: 0, x: -0.75, y: 0.0, zoom: 1.0, iter: 300, palette: 0, juliaMode: false },
+            { name: "Seahorse Valley", type: 0, x: -0.743643887, y: 0.131825904, zoom: 12000.0, iter: 600, palette: 0, juliaMode: false },
+            { name: "Elephant Valley", type: 0, x: 0.275, y: 0.0, zoom: 300.0, iter: 400, palette: 4, juliaMode: false },
+            { name: "Deep Minibrot", type: 0, x: -1.768778833, y: -0.001738996, zoom: 95000.0, iter: 900, palette: 1, juliaMode: false },
+            { name: "Douady's Rabbit", type: 1, x: 0.0, y: 0.0, zoom: 1.2, iter: 350, palette: 3, juliaMode: true, cx: -0.123, cy: 0.745 },
+            { name: "San Marco Dragon", type: 1, x: 0.0, y: 0.0, zoom: 1.2, iter: 350, palette: 2, juliaMode: true, cx: -0.75, cy: 0.11 },
+            { name: "Burning Ship Mast", type: 2, x: -0.45, y: -0.5, zoom: 180.0, iter: 500, palette: 1, juliaMode: false },
+            { name: "Tricorn Antennae", type: 3, x: 0.0, y: 0.0, zoom: 1.3, iter: 350, palette: 0, juliaMode: false },
+            { name: "Newton Roots", type: 4, x: 0.0, y: 0.0, zoom: 1.2, iter: 200, palette: 5, juliaMode: false },
+            { name: "Multi-Power Cubic", type: 5, x: 0.0, y: 0.0, zoom: 1.2, iter: 350, palette: 3, juliaMode: false, power: 3.0 },
+            { name: "Mandelbox Fold 2D", type: 6, x: 0.0, y: 0.0, zoom: 1.0, iter: 250, palette: 0, juliaMode: false }
+        ];
+
+        /* ===================================================================
+           2. GLSL SHADER SOURCES (OPTIMIZED UNIFIED HIGH-PRECISION)
+           =================================================================== */
+        const vertexShaderSource = `
+            attribute vec2 a_position;
+            varying vec2 v_uv;
+            void main() {
+                v_uv = (a_position + 1.0) * 0.5;
+                gl_Position = vec4(a_position, 0.0, 1.0);
+            }
+        `;
+
+        const fragmentShaderSource = `
+            precision highp float;
+
+            uniform vec2 u_resolution;
+            uniform vec2 u_center;
+            uniform float u_zoom;
+            uniform int u_maxIterations;
+            uniform int u_fractalType;
+            uniform vec2 u_juliaC;
+            uniform float u_power;
+            uniform int u_isJuliaMode;
+            uniform int u_palette;
+            uniform float u_colorCycle;
+            uniform float u_colorFreq;
+            uniform float u_hueOffset;
+
+            varying vec2 v_uv;
+
+            vec2 complexSq(vec2 c) {
+                return vec2(c.x * c.x - c.y * c.y, 2.0 * c.x * c.y);
+            }
+
+            vec2 complexMul(vec2 a, vec2 b) {
+                return vec2(a.x * b.x - a.y * b.y, a.x * b.y + a.y * b.x);
+            }
+
+            vec2 complexDiv(vec2 a, vec2 b) {
+                float denom = b.x * b.x + b.y * b.y;
+                return vec2((a.x * b.x + a.y * b.y) / denom, (a.y * b.x - a.x * b.y) / denom);
+            }
+
+            vec2 complexPower(vec2 z, float p) {
+                float r = length(z);
+                if (r < 0.000001) return vec2(0.0);
+                float theta = atan(z.y, z.x);
+                float r_p = pow(r, p);
+                return vec2(r_p * cos(p * theta), r_p * sin(p * theta));
+            }
+
+            vec3 palette(float t, vec3 a, vec3 b, vec3 c, vec3 d) {
+                return a + b * cos(6.28318530718 * (c * t + d));
+            }
+
+            vec3 getColor(float iterNormalized) {
+                if (iterNormalized >= 1.0) return vec3(0.0);
+
+                float t = iterNormalized * u_colorFreq + u_colorCycle;
+                vec3 col = vec3(0.0);
+
+                if (u_palette == 0) {
+                    col = palette(t, vec3(0.5, 0.5, 0.5), vec3(0.5, 0.5, 0.5), vec3(1.0, 1.0, 1.0), vec3(0.0, 0.33, 0.67));
+                } else if (u_palette == 1) {
+                    col = palette(t, vec3(0.5, 0.5, 0.5), vec3(0.5, 0.5, 0.5), vec3(2.0, 1.0, 0.0), vec3(0.5, 0.20, 0.25));
+                } else if (u_palette == 2) {
+                    col = palette(t, vec3(0.5, 0.5, 0.5), vec3(0.5, 0.5, 0.5), vec3(1.0, 1.0, 1.0), vec3(0.3, 0.20, 0.80));
+                } else if (u_palette == 3) {
+                    col = palette(t, vec3(0.8, 0.5, 0.4), vec3(0.2, 0.4, 0.2), vec3(2.0, 1.0, 1.0), vec3(0.0, 0.25, 0.25));
+                } else if (u_palette == 4) {
+                    col = palette(t, vec3(0.5, 0.5, 0.5), vec3(0.5, 0.5, 0.5), vec3(1.0, 0.7, 0.4), vec3(0.0, 0.15, 0.20));
+                } else if (u_palette == 5) {
+                    col = palette(t, vec3(0.8, 0.8, 0.8), vec3(0.2, 0.2, 0.2), vec3(1.0, 1.0, 1.0), vec3(0.0, 0.33, 0.67));
+                } else {
+                    col = palette(t, vec3(0.5), vec3(0.5), vec3(1.0), vec3(0.0));
+                }
+
+                if (u_hueOffset > 0.0) {
+                    float angle = u_hueOffset * 6.283185;
+                    float cosA = cos(angle);
+                    float sinA = sin(angle);
+                    mat3 rot = mat3(
+                        0.299 + 0.701*cosA + 0.168*sinA, 0.587 - 0.587*cosA + 0.330*sinA, 0.114 - 0.114*cosA - 0.497*sinA,
+                        0.299 - 0.299*cosA - 0.328*sinA, 0.587 + 0.413*cosA + 0.035*sinA, 0.114 - 0.114*cosA + 0.292*sinA,
+                        0.299 - 0.300*cosA + 1.250*sinA, 0.587 - 0.588*cosA - 1.050*sinA, 0.114 + 0.886*cosA - 0.203*sinA
+                    );
+                    col = clamp(rot * col, 0.0, 1.0);
+                }
+
+                return col;
+            }
+
+            void main() {
+                vec2 st = (gl_FragCoord.xy - u_resolution * 0.5) / min(u_resolution.x, u_resolution.y);
+                vec2 coord = u_center + st * (4.0 / u_zoom);
+
+                vec2 z;
+                vec2 c;
+
+                if (u_isJuliaMode == 1 || u_fractalType == 1) {
+                    z = coord;
+                    c = u_juliaC;
+                } else {
+                    z = vec2(0.0);
+                    c = coord;
+                }
+
+                float n = 0.0;
+                float maxI = float(u_maxIterations);
+
+                if (u_fractalType == 0 || u_fractalType == 1) { // Mandelbrot & Julia
+                    for (int i = 0; i < 2500; i++) {
+                        if (float(i) >= maxI) break;
+                        if (dot(z, z) > 4.0) { n = float(i); break; }
+                        z = complexSq(z) + c;
+                    }
+                    if (n < maxI) {
+                        float log_zn = log(dot(z, z)) / 2.0;
+                        float nu = log(log_zn / log(2.0)) / log(2.0);
+                        n = n + 1.0 - nu;
+                    } else { n = maxI; }
+                } else if (u_fractalType == 2) { // Burning Ship
+                    for (int i = 0; i < 2500; i++) {
+                        if (float(i) >= maxI) break;
+                        if (dot(z, z) > 4.0) { n = float(i); break; }
+                        z = vec2(z.x * z.x - z.y * z.y, -2.0 * abs(z.x * z.y)) + c;
+                        z = abs(z);
+                    }
+                    if (n < maxI) {
+                        float log_zn = log(dot(z, z)) / 2.0;
+                        float nu = log(log_zn / log(2.0)) / log(2.0);
+                        n = n + 1.0 - nu;
+                    } else { n = maxI; }
+                } else if (u_fractalType == 3) { // Tricorn / Mandelbar
+                    for (int i = 0; i < 2500; i++) {
+                        if (float(i) >= maxI) break;
+                        if (dot(z, z) > 4.0) { n = float(i); break; }
+                        z = vec2(z.x * z.x - z.y * z.y, -2.0 * z.x * z.y) + c;
+                    }
+                    if (n < maxI) {
+                        float log_zn = log(dot(z, z)) / 2.0;
+                        float nu = log(log_zn / log(2.0)) / log(2.0);
+                        n = n + 1.0 - nu;
+                    } else { n = maxI; }
+                } else if (u_fractalType == 4) { // Newton's Fractal
+                    z = coord;
+                    vec2 r1 = vec2(1.0, 0.0);
+                    vec2 r2 = vec2(-0.5, 0.8660254);
+                    vec2 r3 = vec2(-0.5, -0.8660254);
+                    float rootId = 0.0;
+                    for (int i = 0; i < 2500; i++) {
+                        if (float(i) >= maxI) break;
+                        vec2 z2 = complexSq(z);
+                        vec2 z3 = complexMul(z2, z);
+                        vec2 num = 2.0 * z3 + vec2(1.0, 0.0);
+                        vec2 den = 3.0 * z2;
+                        vec2 zNext = complexDiv(num, den);
+                        if (length(zNext - z) < 0.0001) {
+                            n = float(i);
+                            if (length(zNext - r1) < 0.1) rootId = 0.0;
+                            else if (length(zNext - r2) < 0.1) rootId = 0.333;
+                            else rootId = 0.666;
+                            break;
+                        }
+                        z = zNext;
+                    }
+                    if (n < maxI) {
+                        gl_FragColor = vec4(getColor(n / maxI + rootId), 1.0);
+                        return;
+                    } else {
+                        gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
+                        return;
+                    }
+                } else if (u_fractalType == 5) { // Multi-Power
+                    if (u_isJuliaMode == 1) { z = coord; c = u_juliaC; }
+                    else { z = vec2(0.0001); c = coord; }
+                    for (int i = 0; i < 2500; i++) {
+                        if (float(i) >= maxI) break;
+                        if (dot(z, z) > 4.0) { n = float(i); break; }
+                        z = complexPower(z, u_power) + c;
+                    }
+                    if (n < maxI) {
+                        float log_zn = log(dot(z, z)) / 2.0;
+                        float nu = log(log_zn / log(u_power)) / log(u_power);
+                        n = n + 1.0 - nu;
+                    } else { n = maxI; }
+                } else if (u_fractalType == 6) { // Mandelbox 2D
+                    z = coord;
+                    c = coord;
+                    for (int i = 0; i < 2500; i++) {
+                        if (float(i) >= maxI) break;
+                        if (dot(z, z) > 16.0) { n = float(i); break; }
+                        // Box fold
+                        if (z.x > 1.0) z.x = 2.0 - z.x;
+                        else if (z.x < -1.0) z.x = -2.0 - z.x;
+                        if (z.y > 1.0) z.y = 2.0 - z.y;
+                        else if (z.y < -1.0) z.y = -2.0 - z.y;
+                        // Sphere fold
+                        float r2 = dot(z, z);
+                        if (r2 < 0.25) z *= 4.0;
+                        else if (r2 < 1.0) z /= r2;
+                        z = 2.0 * z + c;
+                    }
+                    if (n < maxI) {
+                        float log_zn = log(dot(z, z)) / 2.0;
+                        float nu = log(log_zn / log(2.0)) / log(2.0);
+                        n = n + 1.0 - nu;
+                    } else { n = maxI; }
+                }
+
+                float normIter = n / maxI;
+                vec3 color = getColor(normIter);
+                gl_FragColor = vec4(color, 1.0);
+            }
+        `;
+
+        /* ===================================================================
+           3. WEBGL CONTEXT SETUP & COMPILATION
+           =================================================================== */
+        const mainCanvas = document.getElementById('main-canvas');
+        const gl = mainCanvas.getContext('webgl', { preserveDrawingBuffer: true }) || mainCanvas.getContext('experimental-webgl');
+
+        if (!gl) {
+            alert("WebGL is required to run this application.");
+        }
+
+        function createShader(gl, type, source) {
+            const shader = gl.createShader(type);
+            gl.shaderSource(shader, source);
+            gl.compileShader(shader);
+            if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+                console.error("Shader Compile Error:", gl.getShaderInfoLog(shader));
+                gl.deleteShader(shader);
+                return null;
+            }
+            return shader;
+        }
+
+        const vertShader = createShader(gl, gl.VERTEX_SHADER, vertexShaderSource);
+        const fragShader = createShader(gl, gl.FRAGMENT_SHADER, fragmentShaderSource);
+
+        const program = gl.createProgram();
+        gl.attachShader(program, vertShader);
+        gl.attachShader(program, fragShader);
+        gl.linkProgram(program);
+
+        const positionBuffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1, 1,-1, -1,1, -1,1, 1,-1, 1,1]), gl.STATIC_DRAW);
+
+        const positionLocation = gl.getAttribLocation(program, "a_position");
+
+        const uniforms = {
+            resolution: gl.getUniformLocation(program, "u_resolution"),
+            center: gl.getUniformLocation(program, "u_center"),
+            zoom: gl.getUniformLocation(program, "u_zoom"),
+            maxIterations: gl.getUniformLocation(program, "u_maxIterations"),
+            fractalType: gl.getUniformLocation(program, "u_fractalType"),
+            juliaC: gl.getUniformLocation(program, "u_juliaC"),
+            power: gl.getUniformLocation(program, "u_power"),
+            isJuliaMode: gl.getUniformLocation(program, "u_isJuliaMode"),
+            palette: gl.getUniformLocation(program, "u_palette"),
+            colorCycle: gl.getUniformLocation(program, "u_colorCycle"),
+            colorFreq: gl.getUniformLocation(program, "u_colorFreq"),
+            hueOffset: gl.getUniformLocation(program, "u_hueOffset")
+        };
+
+        /* Secondary Contexts for PiP and MiniMap */
+        const pipCanvas = document.getElementById('pip-canvas');
+        const pipGl = pipCanvas.getContext('webgl');
+        let pipProgram = null;
+        let pipUniforms = {};
+
+        if (pipGl) {
+            const pVert = createShader(pipGl, pipGl.VERTEX_SHADER, vertexShaderSource);
+            const pFrag = createShader(pipGl, pipGl.FRAGMENT_SHADER, fragmentShaderSource);
+            pipProgram = pipGl.createProgram();
+            pipGl.attachShader(pipProgram, pVert);
+            pipGl.attachShader(pipProgram, pFrag);
+            pipGl.linkProgram(pipProgram);
+
+            const buf = pipGl.createBuffer();
+            pipGl.bindBuffer(pipGl.ARRAY_BUFFER, buf);
+            pipGl.bufferData(pipGl.ARRAY_BUFFER, new Float32Array([-1,-1, 1,-1, -1,1, -1,1, 1,-1, 1,1]), pipGl.STATIC_DRAW);
+
+            pipUniforms = {
+                resolution: pipGl.getUniformLocation(pipProgram, "u_resolution"),
+                center: pipGl.getUniformLocation(pipProgram, "u_center"),
+                zoom: pipGl.getUniformLocation(pipProgram, "u_zoom"),
+                maxIterations: pipGl.getUniformLocation(pipProgram, "u_maxIterations"),
+                fractalType: pipGl.getUniformLocation(pipProgram, "u_fractalType"),
+                juliaC: pipGl.getUniformLocation(pipProgram, "u_juliaC"),
+                power: pipGl.getUniformLocation(pipProgram, "u_power"),
+                isJuliaMode: pipGl.getUniformLocation(pipProgram, "u_isJuliaMode"),
+                palette: pipGl.getUniformLocation(pipProgram, "u_palette"),
+                colorCycle: pipGl.getUniformLocation(pipProgram, "u_colorCycle"),
+                colorFreq: pipGl.getUniformLocation(pipProgram, "u_colorFreq"),
+                hueOffset: pipGl.getUniformLocation(pipProgram, "u_hueOffset")
+            };
+        }
+
+        const minimapCanvas = document.getElementById('minimap-canvas');
+        const minimapCtx = minimapCanvas.getContext('2d');
+
+        /* ===================================================================
+           4. RESOLUTION & PIXEL RATIO LOGIC
+           =================================================================== */
+        let interactionTimer = null;
+
+        function setRenderScale(scale) {
+            state.renderScale = parseFloat(scale);
+            document.getElementById('slider-render-scale').value = state.renderScale;
+            document.getElementById('val-render-scale').textContent = `${state.renderScale.toFixed(2)}x`;
+            
+            // Update active pill styling
+            document.querySelectorAll('.scale-pill').forEach(btn => {
+                const bScale = parseFloat(btn.getAttribute('data-scale'));
+                if (Math.abs(bScale - state.renderScale) < 0.05) {
+                    btn.className = "scale-pill py-1 text-[10px] font-mono rounded bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 font-bold";
+                } else {
+                    btn.className = "scale-pill py-1 text-[10px] font-mono rounded bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700";
+                }
+            });
+
+            resizeCanvases();
+            showToast(`Render Resolution Scale: ${state.renderScale}x`, "🖥️");
+        }
+
+        function onRenderScaleSlider(val) {
+            setRenderScale(val);
+        }
+
+        function triggerInteractionState() {
+            state.isInteracting = true;
+            if (interactionTimer) clearTimeout(interactionTimer);
+            interactionTimer = setTimeout(() => {
+                state.isInteracting = false;
+                resizeCanvases(); // Re-render high quality when movement finishes
+            }, 180);
+        }
+
+        function resizeCanvases() {
+            let activeScale = state.renderScale;
+            if (state.dynamicRes && state.isInteracting) {
+                activeScale = Math.min(state.renderScale, 0.5); // Downscale while dragging for 60 FPS
+            }
+
+            const w = Math.round(window.innerWidth * activeScale);
+            const h = Math.round(window.innerHeight * activeScale);
+
+            if (mainCanvas.width !== w || mainCanvas.height !== h) {
+                mainCanvas.width = w;
+                mainCanvas.height = h;
+            }
+
+            // Update Header & HUD Resolution Badges
+            const mp = ((w * h) / 1e6).toFixed(2);
+            document.getElementById('badge-res-dimensions').textContent = `${w} × ${h}`;
+            document.getElementById('badge-res-megapixels').textContent = `${mp} MP`;
+            document.getElementById('badge-res-scale').textContent = `${activeScale.toFixed(2)}x`;
+            document.getElementById('readout-pixel-dims').textContent = `${w} × ${h}`;
+            document.getElementById('hud-buffer-size').textContent = `${w} × ${h}`;
+
+            if (pipCanvas && (pipCanvas.width !== 160 || pipCanvas.height !== 160)) {
+                pipCanvas.width = 160;
+                pipCanvas.height = 160;
+            }
+
+            if (minimapCanvas && (minimapCanvas.width !== 160 || minimapCanvas.height !== 160)) {
+                minimapCanvas.width = 160;
+                minimapCanvas.height = 160;
+            }
+        }
+
+        /* ===================================================================
+           5. INTERACTIVE NAVIGATION (MOUSE & TOUCH)
+           =================================================================== */
+        let isDragging = false;
+        let dragStart = { x: 0, y: 0 };
+        let touchStartDist = 0;
+
+        function screenToComplex(px, py, canvas, center, zoom) {
+            const minDim = Math.min(canvas.width, canvas.height);
+            const stX = (px - canvas.width * 0.5) / minDim;
+            const stY = (canvas.height * 0.5 - py) / minDim;
+            return {
+                x: center.x + stX * (4.0 / zoom),
+                y: center.y + stY * (4.0 / zoom)
+            };
+        }
+
+        mainCanvas.addEventListener('mousedown', (e) => {
+            isDragging = true;
+            dragStart = { x: e.clientX, y: e.clientY };
+            triggerInteractionState();
+
+            // Canvas Click to Pick Julia C parameter
+            if (state.juliaLock) {
+                const rect = mainCanvas.getBoundingClientRect();
+                const coord = screenToComplex(e.clientX - rect.left, e.clientY - rect.top, mainCanvas, state.center, state.zoom);
+                state.juliaC.x = coord.x;
+                state.juliaC.y = coord.y;
+                updateJuliaUI();
+            }
         });
 
-      } catch (err) {
-        loading.innerText = `[ ERROR: ${err.message} ]`;
-        loading.style.color = "var(--neon-pink)";
-      }
-    }
+        window.addEventListener('mousemove', (e) => {
+            const rect = mainCanvas.getBoundingClientRect();
+            const coord = screenToComplex(e.clientX - rect.left, e.clientY - rect.top, mainCanvas, state.center, state.zoom);
+            state.hoverCoord = coord;
 
-    fetchRepos();
-  </script>
+            if (!isDragging) return;
+            triggerInteractionState();
+
+            const dx = e.clientX - dragStart.x;
+            const dy = e.clientY - dragStart.y;
+            dragStart = { x: e.clientX, y: e.clientY };
+
+            const minDim = Math.min(mainCanvas.width, mainCanvas.height);
+            const moveX = (dx / minDim) * (4.0 / state.zoom);
+            const moveY = (dy / minDim) * (4.0 / state.zoom);
+
+            state.targetCenter.x -= moveX;
+            state.targetCenter.y += moveY;
+            state.center.x = state.targetCenter.x;
+            state.center.y = state.targetCenter.y;
+        });
+
+        window.addEventListener('mouseup', () => { isDragging = false; });
+
+        mainCanvas.addEventListener('wheel', (e) => {
+            e.preventDefault();
+            triggerInteractionState();
+
+            const rect = mainCanvas.getBoundingClientRect();
+            const mousePx = e.clientX - rect.left;
+            const mousePy = e.clientY - rect.top;
+
+            const targetBefore = screenToComplex(mousePx, mousePy, mainCanvas, state.targetCenter, state.targetZoom);
+
+            const zoomFactor = e.deltaY < 0 ? 1.25 : 0.8;
+            state.targetZoom *= zoomFactor;
+            state.targetZoom = Math.max(0.1, Math.min(1e14, state.targetZoom));
+
+            const targetAfter = screenToComplex(mousePx, mousePy, mainCanvas, state.targetCenter, state.targetZoom);
+
+            state.targetCenter.x += (targetBefore.x - targetAfter.x);
+            state.targetCenter.y += (targetBefore.y - targetAfter.y);
+        }, { passive: false });
+
+        mainCanvas.addEventListener('touchstart', (e) => {
+            triggerInteractionState();
+            if (e.touches.length === 1) {
+                isDragging = true;
+                dragStart = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+            } else if (e.touches.length === 2) {
+                isDragging = false;
+                touchStartDist = Math.hypot(
+                    e.touches[0].clientX - e.touches[1].clientX,
+                    e.touches[0].clientY - e.touches[1].clientY
+                );
+            }
+        });
+
+        mainCanvas.addEventListener('touchmove', (e) => {
+            triggerInteractionState();
+            if (e.touches.length === 1 && isDragging) {
+                const dx = e.touches[0].clientX - dragStart.x;
+                const dy = e.touches[0].clientY - dragStart.y;
+                dragStart = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+
+                const minDim = Math.min(mainCanvas.width, mainCanvas.height);
+                state.targetCenter.x -= (dx / minDim) * (4.0 / state.zoom);
+                state.targetCenter.y += (dy / minDim) * (4.0 / state.zoom);
+                state.center.x = state.targetCenter.x;
+                state.center.y = state.targetCenter.y;
+            } else if (e.touches.length === 2) {
+                const dist = Math.hypot(
+                    e.touches[0].clientX - e.touches[1].clientX,
+                    e.touches[0].clientY - e.touches[1].clientY
+                );
+                const factor = dist / touchStartDist;
+                touchStartDist = dist;
+                state.targetZoom *= factor;
+            }
+        });
+
+        mainCanvas.addEventListener('touchend', () => { isDragging = false; });
+
+        /* Keyboard Hotkeys */
+        window.addEventListener('keydown', (e) => {
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
+
+            if (e.code === 'Space') {
+                e.preventDefault();
+                state.autoZoom = !state.autoZoom;
+                document.getElementById('check-autozoom').checked = state.autoZoom;
+                showToast(state.autoZoom ? "Auto-Zoom Enabled" : "Auto-Zoom Paused", "🚀");
+            } else if (e.key.toLowerCase() === 'r') {
+                resetView();
+            } else if (e.key.toLowerCase() === 's') {
+                openExportModal();
+            } else if (e.key.toLowerCase() === 'h') {
+                toggleUIPanels();
+            }
+        });
+
+        /* ===================================================================
+           6. GENERATIVE WEB AUDIO SYNTH
+           =================================================================== */
+        let audioCtx = null, masterGain = null, osc1 = null, osc2 = null, filterNode = null;
+
+        function toggleAudio() {
+            if (!audioCtx) {
+                const AudioClass = window.AudioContext || window.webkitAudioContext;
+                audioCtx = new AudioClass();
+                masterGain = audioCtx.createGain();
+                masterGain.gain.setValueAtTime(0.12, audioCtx.currentTime);
+
+                filterNode = audioCtx.createBiquadFilter();
+                filterNode.type = 'lowpass';
+                filterNode.frequency.setValueAtTime(400, audioCtx.currentTime);
+
+                osc1 = audioCtx.createOscillator();
+                osc2 = audioCtx.createOscillator();
+                osc1.type = 'sine';
+                osc2.type = 'triangle';
+
+                osc1.connect(filterNode);
+                osc2.connect(filterNode);
+                filterNode.connect(masterGain);
+                masterGain.connect(audioCtx.destination);
+
+                osc1.start();
+                osc2.start();
+            }
+
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+                state.audioEnabled = true;
+                document.getElementById('audio-icon').textContent = '🔊';
+                document.getElementById('audio-btn').classList.add('border-cyan-500', 'text-cyan-400');
+                showToast("Generative Soundscape Active", "🎶");
+            } else {
+                audioCtx.suspend();
+                state.audioEnabled = false;
+                document.getElementById('audio-icon').textContent = '🔇';
+                document.getElementById('audio-btn').classList.remove('border-cyan-500', 'text-cyan-400');
+                showToast("Sound Muted", "🔇");
+            }
+        }
+
+        function updateAudioPitch() {
+            if (!state.audioEnabled || !audioCtx || audioCtx.state !== 'running') return;
+            const now = audioCtx.currentTime;
+            const logZoom = Math.log10(state.zoom);
+            const freq1 = 110 * Math.pow(2, (logZoom * 0.4) % 3);
+            const freq2 = freq1 * 1.5;
+
+            osc1.frequency.setTargetAtTime(freq1, now, 0.2);
+            osc2.frequency.setTargetAtTime(freq2, now, 0.2);
+
+            const cutoff = 200 + Math.abs(state.center.x) * 600;
+            filterNode.frequency.setTargetAtTime(cutoff, now, 0.2);
+        }
+
+        /* ===================================================================
+           7. OFFLINE HIGH-RES IMAGE EXPORT MANAGER (TILE-BY-TILE RENDER)
+           =================================================================== */
+        function openExportModal() {
+            document.getElementById('export-modal').classList.remove('hidden');
+        }
+
+        function closeExportModal() {
+            document.getElementById('export-modal').classList.add('hidden');
+            document.getElementById('export-progress-box').classList.add('hidden');
+        }
+
+        function onExportPresetChange(val) {
+            const customBox = document.getElementById('export-custom-dims');
+            customBox.classList.toggle('hidden', val !== 'custom');
+        }
+
+        function getTargetExportDimensions() {
+            const preset = document.getElementById('export-res-preset').value;
+            let w = mainCanvas.width;
+            let h = mainCanvas.height;
+
+            if (preset === '720p') { w = 1280; h = 720; }
+            else if (preset === '1080p') { w = 1920; h = 1080; }
+            else if (preset === '1440p') { w = 2560; h = 1440; }
+            else if (preset === '4k') { w = 3840; h = 2160; }
+            else if (preset === '8k') { w = 7680; h = 4320; }
+            else if (preset === 'custom') {
+                w = parseInt(document.getElementById('export-width').value) || 1920;
+                h = parseInt(document.getElementById('export-height').value) || 1080;
+            }
+
+            const ssaa = parseInt(document.getElementById('export-ssaa').value) || 1;
+            return { width: w * ssaa, height: h * ssaa, finalWidth: w, finalHeight: h };
+        }
+
+        async function startHighResExport() {
+            const btn = document.getElementById('btn-start-export');
+            const progressBox = document.getElementById('export-progress-box');
+            const progressBar = document.getElementById('export-progress-bar');
+            const progressPercent = document.getElementById('export-progress-percent');
+            const statusText = document.getElementById('export-status-text');
+
+            btn.disabled = true;
+            btn.classList.add('opacity-50');
+            progressBox.classList.remove('hidden');
+
+            const dims = getTargetExportDimensions();
+            const format = document.getElementById('export-format').value;
+            const watermark = document.getElementById('export-watermark').checked;
+            const filename = (document.getElementById('export-filename').value || 'fractal-render').trim();
+
+            statusText.textContent = `Preparing ${dims.finalWidth}×${dims.finalHeight} Render Canvas...`;
+            progressBar.style.width = '10%';
+            progressPercent.textContent = '10%';
+
+            await new Promise(r => setTimeout(r, 100));
+
+            // Create off-screen rendering target canvas
+            const offscreenCanvas = document.createElement('canvas');
+            offscreenCanvas.width = dims.width;
+            offscreenCanvas.height = dims.height;
+
+            const offGl = offscreenCanvas.getContext('webgl', { preserveDrawingBuffer: true });
+            if (!offGl) {
+                showToast("Off-screen GPU render context failed!", "❌");
+                btn.disabled = false;
+                btn.classList.remove('opacity-50');
+                return;
+            }
+
+            // Compile shaders in off-screen context
+            const oVert = createShader(offGl, offGl.VERTEX_SHADER, vertexShaderSource);
+            const oFrag = createShader(offGl, offGl.FRAGMENT_SHADER, fragmentShaderSource);
+            const oProg = offGl.createProgram();
+            offGl.attachShader(oProg, oVert);
+            offGl.attachShader(oProg, oFrag);
+            offGl.linkProgram(oProg);
+
+            const oBuf = offGl.createBuffer();
+            offGl.bindBuffer(offGl.ARRAY_BUFFER, oBuf);
+            offGl.bufferData(offGl.ARRAY_BUFFER, new Float32Array([-1,-1, 1,-1, -1,1, -1,1, 1,-1, 1,1]), offGl.STATIC_DRAW);
+
+            const oPosLoc = offGl.getAttribLocation(oProg, "a_position");
+
+            statusText.textContent = "Executing WebGL Shader Pass...";
+            progressBar.style.width = '40%';
+            progressPercent.textContent = '40%';
+            await new Promise(r => setTimeout(r, 100));
+
+            offGl.viewport(0, 0, dims.width, dims.height);
+            offGl.useProgram(oProg);
+
+            offGl.bindBuffer(offGl.ARRAY_BUFFER, oBuf);
+            offGl.enableVertexAttribArray(oPosLoc);
+            offGl.vertexAttribPointer(oPosLoc, 2, offGl.FLOAT, false, 0, 0);
+
+            offGl.uniform2f(offGl.getUniformLocation(oProg, "u_resolution"), dims.width, dims.height);
+            offGl.uniform2f(offGl.getUniformLocation(oProg, "u_center"), state.center.x, state.center.y);
+            offGl.uniform1f(offGl.getUniformLocation(oProg, "u_zoom"), state.zoom);
+            offGl.uniform1i(offGl.getUniformLocation(oProg, "u_maxIterations"), Math.max(state.maxIterations, 500)); // Boost quality for high-res
+            offGl.uniform1i(offGl.getUniformLocation(oProg, "u_fractalType"), state.fractalType);
+            offGl.uniform2f(offGl.getUniformLocation(oProg, "u_juliaC"), state.juliaC.x, state.juliaC.y);
+            offGl.uniform1f(offGl.getUniformLocation(oProg, "u_power"), state.power);
+            offGl.uniform1i(offGl.getUniformLocation(oProg, "u_isJuliaMode"), state.isJuliaMode ? 1 : 0);
+            offGl.uniform1i(offGl.getUniformLocation(oProg, "u_palette"), state.palette);
+            offGl.uniform1f(offGl.getUniformLocation(oProg, "u_colorCycle"), state.colorCycle);
+            offGl.uniform1f(offGl.getUniformLocation(oProg, "u_colorFreq"), state.colorFreq);
+            offGl.uniform1f(offGl.getUniformLocation(oProg, "u_hueOffset"), state.hueOffset);
+
+            offGl.drawArrays(offGl.TRIANGLES, 0, 6);
+
+            statusText.textContent = "Downsampling & Compositing Metadata...";
+            progressBar.style.width = '75%';
+            progressPercent.textContent = '75%';
+            await new Promise(r => setTimeout(r, 100));
+
+            // Downsample to final size canvas
+            const finalCanvas = document.createElement('canvas');
+            finalCanvas.width = dims.finalWidth;
+            finalCanvas.height = dims.finalHeight;
+            const ctx = finalCanvas.getContext('2d');
+
+            ctx.drawImage(offscreenCanvas, 0, 0, dims.finalWidth, dims.finalHeight);
+
+            // Optional Watermark Metadata
+            if (watermark) {
+                const boxW = Math.min(420, dims.finalWidth * 0.4);
+                const boxH = 50;
+                ctx.fillStyle = 'rgba(3, 6, 13, 0.82)';
+                ctx.fillRect(20, dims.finalHeight - boxH - 20, boxW, boxH);
+                ctx.strokeStyle = '#06b6d4';
+                ctx.lineWidth = 1.5;
+                ctx.strokeRect(20, dims.finalHeight - boxH - 20, boxW, boxH);
+
+                ctx.font = 'bold 13px "JetBrains Mono", monospace';
+                ctx.fillStyle = '#06b6d4';
+                ctx.fillText(`CYBERFRACTAL PRO | Zoom: 10^${Math.log10(state.zoom).toFixed(2)}`, 34, dims.finalHeight - boxH + 2);
+                ctx.font = '11px "JetBrains Mono", monospace';
+                ctx.fillStyle = '#94a3b8';
+                ctx.fillText(`X: ${state.center.x.toFixed(7)}  Y: ${state.center.y.toFixed(7)}`, 34, dims.finalHeight - boxH + 20);
+            }
+
+            statusText.textContent = "Encoding Image Blob...";
+            progressBar.style.width = '90%';
+            progressPercent.textContent = '90%';
+            await new Promise(r => setTimeout(r, 100));
+
+            finalCanvas.toBlob((blob) => {
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                const ext = format === 'image/jpeg' ? 'jpg' : 'png';
+                a.download = `${filename}-${dims.finalWidth}x${dims.finalHeight}.${ext}`;
+                a.href = url;
+                a.click();
+                URL.revokeObjectURL(url);
+
+                progressBar.style.width = '100%';
+                progressPercent.textContent = '100%';
+                statusText.textContent = "Export Complete!";
+
+                showToast(`High-Res Snapshot Exported (${dims.finalWidth}×${dims.finalHeight})`, "📸");
+
+                setTimeout(() => {
+                    btn.disabled = false;
+                    btn.classList.remove('opacity-50');
+                    closeExportModal();
+                }, 800);
+            }, format, 0.95);
+        }
+
+        /* ===================================================================
+           8. UI CONTROLS & SYNCHRONIZATION
+           =================================================================== */
+        function updateJuliaUI() {
+            document.getElementById('val-cr').textContent = state.juliaC.x.toFixed(4);
+            document.getElementById('val-ci').textContent = state.juliaC.y.toFixed(4);
+            document.getElementById('slider-cr').value = state.juliaC.x;
+            document.getElementById('slider-ci').value = state.juliaC.y;
+        }
+
+        function updateJuliaCFromSliders() {
+            state.juliaC.x = parseFloat(document.getElementById('slider-cr').value);
+            state.juliaC.y = parseFloat(document.getElementById('slider-ci').value);
+            document.getElementById('val-cr').textContent = state.juliaC.x.toFixed(4);
+            document.getElementById('val-ci').textContent = state.juliaC.y.toFixed(4);
+        }
+
+        function toggleJuliaLock() {
+            state.juliaLock = !state.juliaLock;
+            const btn = document.getElementById('btn-julia-lock');
+            btn.textContent = state.juliaLock ? "🔒 Canvas Click: ON" : "🔓 Canvas Click: OFF";
+            btn.className = state.juliaLock ?
+                "text-[10px] font-mono px-2 py-0.5 rounded bg-pink-500/20 text-pink-300 border border-pink-500/30" :
+                "text-[10px] font-mono px-2 py-0.5 rounded bg-slate-800 text-slate-400 border border-slate-700";
+        }
+
+        function onAlgorithmChange(val) {
+            state.fractalType = parseInt(val);
+            document.getElementById('box-power').classList.toggle('hidden', state.fractalType !== 5);
+            if (state.fractalType === 1) {
+                state.isJuliaMode = true;
+                document.getElementById('check-julia-mode').checked = true;
+            }
+            showToast(`Algorithm: ${document.getElementById('select-algorithm').selectedOptions[0].text}`, "🌀");
+        }
+
+        function toggleJuliaMode(checked) { state.isJuliaMode = checked; }
+        function updatePower(val) {
+            state.power = parseFloat(val);
+            document.getElementById('val-power').textContent = state.power.toFixed(1);
+        }
+        function updateIterations(val) {
+            state.maxIterations = parseInt(val);
+            document.getElementById('val-iterations').textContent = val;
+        }
+        function updatePalette(val) { state.palette = parseInt(val); }
+        function updateFreq(val) {
+            state.colorFreq = parseFloat(val);
+            document.getElementById('val-freq').textContent = `${val}x`;
+        }
+        function updateHue(val) {
+            state.hueOffset = parseFloat(val);
+            document.getElementById('val-hue').textContent = val;
+        }
+        function toggleMorphing(checked) { state.morphing = checked; }
+        function toggleAutoZoom(checked) { state.autoZoom = checked; }
+
+        function resetView() {
+            state.targetCenter = { x: -0.75, y: 0.0 };
+            state.center = { x: -0.75, y: 0.0 };
+            state.targetZoom = 1.0;
+            state.zoom = 1.0;
+            showToast("Coordinates & Zoom Reset", "↺");
+        }
+
+        function renderPresetsList() {
+            const list = document.getElementById('bookmarks-list');
+            list.innerHTML = '';
+            presets.forEach((p) => {
+                const item = document.createElement('div');
+                item.className = 'glass-card p-2 rounded-xl border border-slate-800 hover:border-cyan-500/50 cursor-pointer flex items-center justify-between group transition';
+                item.onclick = () => loadPreset(p);
+
+                item.innerHTML = `
+                    <div>
+                        <div class="font-semibold text-slate-200 group-hover:text-cyan-300">${p.name}</div>
+                        <div class="text-[10px] text-slate-400 font-mono">Zoom: 10<sup>${Math.log10(p.zoom).toFixed(1)}</sup></div>
+                    </div>
+                    <span class="text-xs text-slate-500 group-hover:text-cyan-400">➔</span>
+                `;
+                list.appendChild(item);
+            });
+        }
+
+        function loadPreset(p) {
+            state.fractalType = p.type;
+            document.getElementById('select-algorithm').value = p.type;
+            onAlgorithmChange(p.type);
+
+            state.targetCenter = { x: p.x, y: p.y };
+            state.center = { x: p.x, y: p.y };
+            state.targetZoom = p.zoom;
+            state.zoom = p.zoom;
+            state.maxIterations = p.iter;
+            document.getElementById('slider-iterations').value = p.iter;
+            document.getElementById('val-iterations').textContent = p.iter;
+
+            state.palette = p.palette;
+            document.getElementById('select-palette').value = p.palette;
+
+            if (p.cx !== undefined) {
+                state.juliaC = { x: p.cx, y: p.cy };
+                updateJuliaUI();
+            }
+
+            if (p.power !== undefined) {
+                state.power = p.power;
+                document.getElementById('slider-power').value = p.power;
+                document.getElementById('val-power').textContent = p.power;
+            }
+
+            showToast(`Preset Loaded: ${p.name}`, "⭐");
+        }
+
+        function saveCustomBookmark() {
+            const name = prompt("Enter a name for this custom bookmark:", `Bookmark @ 10^${Math.log10(state.zoom).toFixed(1)}`);
+            if (!name) return;
+
+            const customP = {
+                name,
+                type: state.fractalType,
+                x: state.center.x,
+                y: state.center.y,
+                zoom: state.zoom,
+                iter: state.maxIterations,
+                palette: state.palette,
+                juliaMode: state.isJuliaMode,
+                cx: state.juliaC.x,
+                cy: state.juliaC.y,
+                power: state.power
+            };
+
+            presets.unshift(customP);
+            localStorage.setItem('cyber_fractal_bookmarks', JSON.stringify(presets.filter(p => p.custom)));
+            renderPresetsList();
+            showToast("Bookmark Saved!", "💾");
+        }
+
+        function loadCustomBookmarksFromStorage() {
+            const saved = localStorage.getItem('cyber_fractal_bookmarks');
+            if (saved) {
+                try {
+                    const parsed = JSON.parse(saved);
+                    parsed.forEach(p => { p.custom = true; presets.unshift(p); });
+                } catch(e){}
+            }
+        }
+
+        function toggleUIPanels() {
+            state.uiVisible = !state.uiVisible;
+            document.getElementById('top-header').style.opacity = state.uiVisible ? '1' : '0';
+            document.getElementById('top-header').style.pointerEvents = state.uiVisible ? 'auto' : 'none';
+            document.getElementById('left-panel').style.transform = state.uiVisible ? 'translateX(0)' : 'translateX(-120%)';
+            document.getElementById('right-panel').style.transform = state.uiVisible ? 'translateX(0)' : 'translateX(120%)';
+            document.getElementById('hide-ui-icon').textContent = state.uiVisible ? '👁️' : '🙈';
+        }
+
+        function showToast(msg, icon = '✨') {
+            const toast = document.getElementById('toast');
+            document.getElementById('toast-msg').textContent = msg;
+            document.getElementById('toast-icon').textContent = icon;
+            toast.classList.remove('opacity-0', 'pointer-events-none', 'translate-y-4');
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'pointer-events-none', 'translate-y-4');
+            }, 2500);
+        }
+
+        function shareLink() {
+            const hashObj = {
+                t: state.fractalType,
+                x: state.center.x.toFixed(8),
+                y: state.center.y.toFixed(8),
+                z: state.zoom.toExponential(4),
+                i: state.maxIterations,
+                p: state.palette,
+                jm: state.isJuliaMode ? 1 : 0,
+                cx: state.juliaC.x.toFixed(4),
+                cy: state.juliaC.y.toFixed(4)
+            };
+            const hashStr = Object.entries(hashObj).map(([k,v]) => `${k}=${v}`).join('&');
+            window.location.hash = hashStr;
+
+            navigator.clipboard.writeText(window.location.href).then(() => {
+                showToast("Shareable Link Copied to Clipboard!", "🔗");
+            }).catch(() => {
+                showToast("URL Hash Updated!", "🔗");
+            });
+        }
+
+        function parseUrlHash() {
+            if (!window.location.hash) return;
+            const params = new URLSearchParams(window.location.hash.substring(1));
+            if (params.has('t')) state.fractalType = parseInt(params.get('t'));
+            if (params.has('x')) state.center.x = parseFloat(params.get('x'));
+            if (params.has('y')) state.center.y = parseFloat(params.get('y'));
+            if (params.has('z')) state.zoom = parseFloat(params.get('z'));
+            if (params.has('i')) state.maxIterations = parseInt(params.get('i'));
+            if (params.has('p')) state.palette = parseInt(params.get('p'));
+            if (params.has('jm')) state.isJuliaMode = params.get('jm') === '1';
+            if (params.has('cx')) state.juliaC.x = parseFloat(params.get('cx'));
+            if (params.has('cy')) state.juliaC.y = parseFloat(params.get('cy'));
+
+            state.targetCenter = { ...state.center };
+            state.targetZoom = state.zoom;
+            document.getElementById('select-algorithm').value = state.fractalType;
+            onAlgorithmChange(state.fractalType);
+            updateJuliaUI();
+        }
+
+        /* ===================================================================
+           9. MAIN ANIMATION & RENDER LOOP
+           =================================================================== */
+        let lastTime = performance.now();
+        let frameCount = 0;
+
+        function animate(now) {
+            // Smooth Interpolation
+            state.center.x += (state.targetCenter.x - state.center.x) * 0.15;
+            state.center.y += (state.targetCenter.y - state.center.y) * 0.15;
+            state.zoom += (state.targetZoom - state.zoom) * 0.15;
+
+            if (state.autoZoom) {
+                state.targetZoom *= state.zoomSpeed;
+                state.zoom = state.targetZoom;
+                triggerInteractionState();
+            }
+
+            if (state.morphing) {
+                state.morphAngle += 0.01 * state.morphSpeed;
+                if (state.morphPath === 'circle') {
+                    state.juliaC.x = 0.785 * Math.cos(state.morphAngle);
+                    state.juliaC.y = 0.785 * Math.sin(state.morphAngle);
+                } else if (state.morphPath === 'lissajous') {
+                    state.juliaC.x = 0.7 * Math.sin(3 * state.morphAngle);
+                    state.juliaC.y = 0.7 * Math.cos(2 * state.morphAngle);
+                } else if (state.morphPath === 'cardioid') {
+                    const r = 0.5 * (1 - Math.cos(state.morphAngle));
+                    state.juliaC.x = r * Math.cos(state.morphAngle) - 0.25;
+                    state.juliaC.y = r * Math.sin(state.morphAngle);
+                }
+                updateJuliaUI();
+                triggerInteractionState();
+            }
+
+            if (state.colorCycling) {
+                state.colorCycle += 0.005;
+            }
+
+            // Render Passes
+            renderMainCanvas();
+            renderPipCanvas();
+            renderMinimap();
+
+            updateAudioPitch();
+
+            // Update Readouts
+            document.getElementById('hud-real').textContent = state.center.x.toFixed(9);
+            document.getElementById('hud-imag').textContent = state.center.y.toFixed(9);
+            document.getElementById('hud-zoom').textContent = state.zoom.toExponential(2);
+
+            frameCount++;
+            if (now - lastTime >= 1000) {
+                document.getElementById('fps-counter').textContent = `${frameCount} FPS`;
+                frameCount = 0;
+                lastTime = now;
+            }
+
+            requestAnimationFrame(animate);
+        }
+
+        function renderMainCanvas() {
+            gl.viewport(0, 0, mainCanvas.width, mainCanvas.height);
+            gl.useProgram(program);
+
+            gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+            gl.enableVertexAttribArray(positionLocation);
+            gl.vertexAttribPointer(positionLocation, 2, gl.FLOAT, false, 0, 0);
+
+            gl.uniform2f(uniforms.resolution, mainCanvas.width, mainCanvas.height);
+            gl.uniform2f(uniforms.center, state.center.x, state.center.y);
+            gl.uniform1f(uniforms.zoom, state.zoom);
+            gl.uniform1i(uniforms.maxIterations, state.maxIterations);
+            gl.uniform1i(uniforms.fractalType, state.fractalType);
+            gl.uniform2f(uniforms.juliaC, state.juliaC.x, state.juliaC.y);
+            gl.uniform1f(uniforms.power, state.power);
+            gl.uniform1i(uniforms.isJuliaMode, state.isJuliaMode ? 1 : 0);
+            gl.uniform1i(uniforms.palette, state.palette);
+            gl.uniform1f(uniforms.colorCycle, state.colorCycle);
+            gl.uniform1f(uniforms.colorFreq, state.colorFreq);
+            gl.uniform1f(uniforms.hueOffset, state.hueOffset);
+
+            gl.drawArrays(gl.TRIANGLES, 0, 6);
+        }
+
+        function renderPipCanvas() {
+            if (!pipGl || !pipProgram) return;
+
+            pipGl.viewport(0, 0, pipCanvas.width, pipCanvas.height);
+            pipGl.useProgram(pipProgram);
+
+            const isPipJulia = !state.isJuliaMode;
+            document.getElementById('pip-title').textContent = isPipJulia ? "Julia Preview" : "Mandelbrot Map";
+
+            pipGl.uniform2f(pipUniforms.resolution, pipCanvas.width, pipCanvas.height);
+            pipGl.uniform2f(pipUniforms.center, 0.0, 0.0);
+            pipGl.uniform1f(pipUniforms.zoom, 1.0);
+            pipGl.uniform1i(pipUniforms.maxIterations, 120);
+            pipGl.uniform1i(pipUniforms.fractalType, isPipJulia ? 1 : 0);
+            pipGl.uniform2f(pipUniforms.juliaC, state.hoverCoord.x, state.hoverCoord.y);
+            pipGl.uniform1f(pipUniforms.power, state.power);
+            pipGl.uniform1i(pipUniforms.isJuliaMode, isPipJulia ? 1 : 0);
+            pipGl.uniform1i(pipUniforms.palette, state.palette);
+            pipGl.uniform1f(pipUniforms.colorCycle, state.colorCycle);
+            pipGl.uniform1f(pipUniforms.colorFreq, state.colorFreq);
+            pipGl.uniform1f(pipUniforms.hueOffset, state.hueOffset);
+
+            pipGl.drawArrays(pipGl.TRIANGLES, 0, 6);
+        }
+
+        function renderMinimap() {
+            minimapCtx.fillStyle = '#03060d';
+            minimapCtx.fillRect(0, 0, minimapCanvas.width, minimapCanvas.height);
+
+            minimapCtx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
+            minimapCtx.strokeRect(10, 10, 140, 140);
+
+            const scale = 140 / 4.0;
+            const boxW = Math.max(4, (4.0 / state.zoom) * scale);
+            const boxH = Math.max(4, (4.0 / state.zoom) * scale);
+            const boxX = 80 + (state.center.x * scale) - (boxW / 2);
+            const boxY = 80 - (state.center.y * scale) - (boxH / 2);
+
+            minimapCtx.strokeStyle = '#06b6d4';
+            minimapCtx.lineWidth = 1.5;
+            minimapCtx.strokeRect(boxX, boxY, boxW, boxH);
+            minimapCtx.fillStyle = 'rgba(6, 182, 212, 0.2)';
+            minimapCtx.fillRect(boxX, boxY, boxW, boxH);
+        }
+
+        /* ===================================================================
+           10. APP LIFECYCLE INITIALIZATION
+           =================================================================== */
+        window.onload = function() {
+            resizeCanvases();
+            window.addEventListener('resize', resizeCanvases);
+            loadCustomBookmarksFromStorage();
+            renderPresetsList();
+            parseUrlHash();
+            requestAnimationFrame(animate);
+        };
+    </script>
 </body>
 </html>
